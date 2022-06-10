@@ -14,13 +14,18 @@ fn handle_client(stream: &mut TcpStream) -> std::io::Result<()>{
     loop {
         match stream.read(&mut buffer) {
             Ok(_) => {
-                let request = String::from_utf8_lossy(&buffer);
+                // let request = String::from_utf8_lossy(&buffer);
+                stream.write("+PONG\r\n".as_bytes())?;
 
-                if request.contains("PING") {
-                    stream.write("+PONG\r\n".as_bytes())?;
-                } else {
-                    stream.write("+".as_bytes())?;
-                }
+
+                // if request.contains("PING") {
+                //     stream.write("+PONG\r\n".as_bytes())?;
+
+                //     break;
+                // } else {
+                //     println!("{}", request);
+                //     stream.write("-\r\n".as_bytes())?;
+                // }
                 // println!("{}", String::from_utf8_lossy(&buffer[..]));
                 // stream.write(&buffer)?;
             }
