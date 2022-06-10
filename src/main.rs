@@ -18,8 +18,6 @@ fn handle_client(stream: &mut TcpStream) -> std::io::Result<()>{
 
         if request.contains("PING") {
             stream.write("+PONG\r\n".as_bytes())?;
-        } else {
-            stream.write("-ERR\r\n".as_bytes())?;
         }
     }
 }
