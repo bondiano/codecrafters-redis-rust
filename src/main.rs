@@ -10,14 +10,24 @@ use std::io::Write;
 use std::net::{TcpListener, TcpStream};
 
 fn handle_client(stream: &mut TcpStream) -> std::io::Result<()>{
+    let mut buffer = vec![];
     loop {
-        let mut buffer = [0; 1024];
-        stream.read(&mut buffer)?;
+        match stream.read(&mut buffer) {
+            Ok(_) => {
+                let request = String::from_utf8_lossy(&buffer);
 
-        let request = String::from_utf8_lossy(&buffer);
-
-        if request.contains("PING") {
-            stream.write("+PONG\r\n".as_bytes())?;
+                if request.contains("PING") {
+                    stream.write("+PONG\r\n".as_bytes())?;
+                } else {
+                    stream.write("+".as_bytes())?;
+                }
+                // println!("{}", String::from_utf8_lossy(&buffer[..]));
+                // stream.write(&buffer)?;
+            }
+            Err(e) => {
+                println!("Error: {}", e);
+                return Err(e);
+            }
         }
     }
 }
