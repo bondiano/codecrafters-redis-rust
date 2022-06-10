@@ -1,48 +1,27 @@
-#[allow(unused_imports)]
-use std::env;
+// use bytes::{Buf, BytesMut};
+use tokio::{
+    net::{TcpListener, TcpStream},
+    stream::StreamExt, io::AsyncWriteExt,
+};
 
-#[allow(unused_imports)]
-use std::fs;
-use std::io::Read;
-use std::io::Write;
-
-#[allow(unused_imports)]
-use std::net::{TcpListener, TcpStream};
-
-fn handle_client(stream: &mut TcpStream) -> std::io::Result<()>{
-    let mut buffer = vec![];
+async fn handle_connection(stream: &mut TcpStream) {
     loop {
-        match stream.read(&mut buffer) {
-            Ok(_) => {
-                // let request = String::from_utf8_lossy(&buffer);
-                stream.write("+PONG\r\n".as_bytes())?;
+        // let mut data = BytesMut::new();
 
-
-                // if request.contains("PING") {
-                //     stream.write("+PONG\r\n".as_bytes())?;
-
-                //     break;
-                // } else {
-                //     println!("{}", request);
-                //     stream.write("-\r\n".as_bytes())?;
-                // }
-                // println!("{}", String::from_utf8_lossy(&buffer[..]));
-                // stream.write(&buffer)?;
-            }
-            Err(e) => {
-                println!("Error: {}", e);
-                // return Err(e);
-            }
-        }
+        let mut response = "+PONG/t/n".as_bytes();
+        stream.write_buf(&mut response).await.unwrap();
     }
 }
 
-fn main() -> std::io::Result<()> {
-    let listener = TcpListener::bind("127.0.0.1:6379").unwrap();
+#[tokio::main]
+async fn main() {
+    let mut listener = TcpListener::bind("127.0.0.1:6379").await.unwrap();
+    let mut incoming = listener.incoming();
 
-    for stream in listener.incoming() {
-        handle_client(&mut stream?)?;
+    while let Some(stream) = incoming.next().await {
+        let mut stream = stream.unwrap();
+        tokio::spawn(async move {
+            handle_connection(&mut stream).await;
+        });
     }
-
-    Ok(())
 }
