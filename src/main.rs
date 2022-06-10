@@ -1,14 +1,19 @@
-// use bytes::{Buf, BytesMut};
+use bytes::{BytesMut};
+
 use tokio::{
+    io::{AsyncReadExt, AsyncWriteExt},
     net::{TcpListener, TcpStream},
-    stream::StreamExt, io::AsyncWriteExt,
+    stream::StreamExt,
 };
 
 async fn handle_connection(stream: &mut TcpStream) {
     loop {
-        // let mut data = BytesMut::new();
+        let mut data = BytesMut::new();
+        stream.read_buf(&mut data).await.unwrap();
 
-        let mut response = "+PONG/t/n".as_bytes();
+        println!("{}", String::from_utf8_lossy(&data));
+
+        let mut response = "+PONG\r\n".as_bytes();
         stream.write_buf(&mut response).await.unwrap();
     }
 }
