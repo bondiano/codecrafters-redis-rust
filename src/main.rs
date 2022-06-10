@@ -39,13 +39,9 @@ fn handle_client(stream: &mut TcpStream) -> std::io::Result<()>{
 
 fn main() -> std::io::Result<()> {
     let listener = TcpListener::bind("127.0.0.1:6379").unwrap();
-    match listener.accept() {
-        Ok((mut socket, addr)) => {
-                println!("accepted new client: {:?}", addr);
 
-                handle_client(&mut socket)?;
-        },
-        Err(e) => println!("couldn't accept client: {:?}", e),
+    for stream in listener.incoming() {
+        handle_client(&mut stream?)?;
     }
 
     Ok(())
