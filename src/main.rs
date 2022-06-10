@@ -31,7 +31,7 @@ fn handle_client(stream: &mut TcpStream) -> std::io::Result<()>{
             }
             Err(e) => {
                 println!("Error: {}", e);
-                return Err(e);
+                // return Err(e);
             }
         }
     }
