@@ -21,3 +21,4 @@ edition = "2018"
 [dependencies]
 bytes = "0.5" # helps manage buffers
 tokio = { version = "0.2", features = ["full"] } # async networking
+itertools = "0.10.3" # helps manage iterators

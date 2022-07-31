@@ -1,3 +1,5 @@
+mod command;
+
 use bytes::{BytesMut};
 
 use tokio::{
@@ -6,17 +8,7 @@ use tokio::{
     stream::StreamExt,
 };
 
-async fn handle_connection(stream: &mut TcpStream) {
-    loop {
-        let mut data = BytesMut::new();
-        stream.read_buf(&mut data).await.unwrap();
-
-        println!("{}", String::from_utf8_lossy(&data));
-
-        let mut response = "+PONG\r\n".as_bytes();
-        stream.write_buf(&mut response).await.unwrap();
-    }
-}
+use command::{ handle_command };
 
 #[tokio::main]
 async fn main() {
@@ -28,5 +20,16 @@ async fn main() {
         tokio::spawn(async move {
             handle_connection(&mut stream).await;
         });
+    }
+}
+
+async fn handle_connection(stream: &mut TcpStream) {
+    loop {
+        let mut command = BytesMut::new();
+        stream.read_buf(&mut command).await.unwrap();
+
+        let mut response = handle_command(&command).await.unwrap();
+
+        stream.write_buf(&mut response).await.unwrap();
     }
 }
