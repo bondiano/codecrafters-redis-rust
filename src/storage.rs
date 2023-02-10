@@ -1,6 +1,6 @@
-use std::time::SystemTime;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
+use std::time::SystemTime;
 
 #[derive(Debug, Clone)]
 struct Data {
