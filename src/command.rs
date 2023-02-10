@@ -6,7 +6,7 @@ use crate::storage::Storage;
 #[derive(Debug, PartialEq)]
 pub enum Command {
     Ping,
-    Set(String, String),
+    Set(String, String, Option<u128>),
     Get(String),
     Error(String),
     Echo(String),
@@ -42,7 +42,20 @@ fn parse_command(command: &[u8]) -> Command {
             let mut args = args.split(" ");
             let key = args.next().unwrap_or("").to_string();
             let value = args.next().unwrap_or("").to_string();
-            Command::Set(key, value)
+            let ttl_type = args.next().unwrap_or("").to_string();
+            let ttl = if ttl_type == "ex" || ttl_type == "px" {
+                let ttl = args.next().unwrap_or("").to_string();
+
+                if ttl_type == "ex" {
+                    Some(ttl.parse::<u128>().unwrap() * 1000)
+                } else {
+                    Some(ttl.parse::<u128>().unwrap())
+                }
+            } else {
+                None
+            };
+
+            Command::Set(key, value, ttl)
         }
         "get" => {
             let mut args = args.split(" ");
@@ -62,10 +75,10 @@ fn execute_command(command: Command, storage: &mut Storage) -> Command {
 
             Command::Error("key not found".to_string())
         },
-        Command::Set(key, value) => {
-            storage.set(&key, &value);
+        Command::Set(key, value, ttl) => {
+            storage.set(&key, &value, ttl);
 
-            Command::Set(key, value)
+            Command::Set(key, value, ttl)
         },
         c => c,
     }
@@ -74,7 +87,7 @@ fn execute_command(command: Command, storage: &mut Storage) -> Command {
 fn format_result(command: &Command) -> BytesMut {
     let result = match command {
         Command::Ping => String::from("+PONG\r\n"),
-        Command::Set(_, _) => format!("+OK\r\n"),
+        Command::Set(_, _, _) => format!("+OK\r\n"),
         Command::Get(value) => format!("+{}\r\n", value),
         Command::Echo(arg) => format!("+{}\r\n", arg),
         Command::Error(err) => format!("-ERR: {}\r\n", err),
@@ -138,5 +151,23 @@ mod command_tests {
             handle_command(&get_command, &mut storage),
             BytesMut::from(&b"+value\r\n"[..])
         );
+    }
+
+    #[test]
+    fn test_expire_set() {
+        let set_command = BytesMut::from(&b"*5\r\n$3\r\nset\r\n$3\r\nkey\r\n$5\r\nvalue\r\n$2\r\npx\r\n$100\r\n1\r\n"[..]);
+        let get_command = BytesMut::from(&b"*2\r\n$3\r\nget\r\n$3\r\nkey\r\n"[..]);
+        let mut storage = storage::Storage::new();
+
+        handle_command(&set_command, &mut storage);
+
+        assert_eq!(
+            handle_command(&get_command, &mut storage),
+            BytesMut::from(&b"+value\r\n"[..])
+        );
+
+        std::thread::sleep(std::time::Duration::from_millis(100));
+
+        handle_command(&set_command, &mut storage);
     }
 }

@@ -4,7 +4,7 @@ mod storage;
 use bytes::BytesMut;
 
 use tokio::{
-    io::{AsyncReadExt, AsyncWriteExt, self},
+    io::{self, AsyncReadExt, AsyncWriteExt},
     net::{TcpListener, TcpStream},
     stream::StreamExt,
 };
